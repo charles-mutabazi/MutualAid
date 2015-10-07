@@ -30,6 +30,7 @@ class MainViewController: UIViewController {
     var zValues = [Double]()
     
     var beacons:AnyObject = []
+    var accData = [String:Array<Double>]()
     
     var regionArray:[Int] = []
     
@@ -54,16 +55,15 @@ class MainViewController: UIViewController {
         if (!loggedIn){
             self.performSegueWithIdentifier("login_segue", sender: self)
         }else {
-            
-            NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateView:", name: "updateBeaconView", object: nil)
+        
             NSNotificationCenter.defaultCenter().addObserver(self, selector: "stateMessage:", name: "updateState", object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: "updateView:", name: "updateBeaconView", object: nil)
+            NSNotificationCenter.defaultCenter().addObserver(self, selector: "dataRecieved:", name: "accelerationData", object: nil)
         }
     }
     
-    override func viewDidLoad() {
-        
-        
-        //MARK: - Accelerometer Code
+    override func viewWillAppear(animated: Bool) {
+        //MARK - For Test Purposes
         motionManager.accelerometerUpdateInterval = 1
         motionManager.startAccelerometerUpdatesToQueue(NSOperationQueue.mainQueue()) { [weak self] (data: CMAccelerometerData?, error: NSError?) in
             self!.outputAccelerationData(data!.acceleration)
@@ -71,14 +71,22 @@ class MainViewController: UIViewController {
                 print("\(error)")
             }
         }
+    }
+    
+    override func viewDidLoad() {
+        
+        
+        //MARK: - Accelerometer Code
+
         super.viewDidLoad()
         //UIApplication.sharedApplication().statusBarHidden = true
         
         service = LocationService()
         configs = Configurations()
         
+        
         //get floors API
-        service.getFloors ("/floors" , callback:{
+        service.getFloors ("/floors" , callback: {
             (response) in
             self.loadFloors(response as! NSArray)
         })
@@ -91,10 +99,6 @@ class MainViewController: UIViewController {
         
         floor_name.text = "Outside Region..."
         details_button.hidden = true
-        
-        
-        NSTimer.scheduledTimerWithTimeInterval(5, target: self, selector: Selector("motionDataCaptured"), userInfo: nil, repeats: true)
-        //print (motionDataCaptured())
         
     }
     
@@ -125,9 +129,14 @@ class MainViewController: UIViewController {
         }
     }
     
+    func dataRecieved(motionData:NSNotification){
+        accData = motionData.object as! [String:Array<Double>]
+    }
+    
     func updateView(found_beacons: NSNotification!) {
         
         beacons = found_beacons.object! as! NSArray
+        
         
         if ((beacons.count) != 0) {
             details_button.hidden = false
@@ -148,12 +157,17 @@ class MainViewController: UIViewController {
                 
                 if sendData == true {
                     sendData = false
-                    let waitTime:NSTimeInterval = 600
+                    let waitTime:NSTimeInterval = 20
+                    
+//                    let xdata = accData.valueForKey("X")
+//                    let ydata = accData.valueForKey("Y")
+//                    let zdata = accData.valueForKey("Z")
+                    //let motionData = "[]"
                     
                     let userid = NSUserDefaults.standardUserDefaults().objectForKey("userid") as! Int
                     let username = NSUserDefaults.standardUserDefaults().objectForKey("username") as! String
                     // Wait for 5min to send another another
-                    NSTimer.scheduledTimerWithTimeInterval(waitTime, target: self, selector: Selector("sendingData"), userInfo: nil, repeats: false)
+                    NSTimer.scheduledTimerWithTimeInterval(waitTime, target: self, selector: Selector("sendingData"), userInfo: nil, repeats: true)
                     
                     let locationData = [
                         "user_id": userid,
@@ -162,10 +176,12 @@ class MainViewController: UIViewController {
                         "uuid": thisFloor.ibeacon_uuid,
                         "major": thisFloor.major_value,
                         "minor": thisFloor.minor_value,
-                        "motion_data": "No Motion Data (Test)"
+                        "motion_data": accData.description
                     ]
                     
                     print("Please wait for \(waitTime/60) Minutes")
+                    //let xdata = accData.valueForKey("X")
+                    //print(accData)
                     //postData
                     service.sendJSON(locationData as! [String : AnyObject], url: configs.getObject("/locations"))
                     
@@ -189,6 +205,7 @@ class MainViewController: UIViewController {
     
     func sendingData(){
         sendData = true
+        
         //print("After 10 Secs")
         //print("Data is sent....")
     }
@@ -244,42 +261,17 @@ class MainViewController: UIViewController {
         }
     }
     
-    func motionDataCaptured() {
-        var accData:Dictionary<String,AnyObject>!
-        
     
-        accData = ["X":xValues, "Y":yValues, "Z":zValues]
-        
-        print(accData)
-        
-        xValues = []
-        yValues = []
-        zValues = []
-        
-    }
-    
-    
-    //Acceleration Data function
-    
+    //MARK - For Test Purposes
     func outputAccelerationData (acceleration:CMAcceleration){
-        
-        
+
         let xData = Double(round(1000*acceleration.x)/1000)
         let yData = Double(round(1000*acceleration.y)/1000)
         let zData = Double(round(1000*acceleration.z)/1000)
         
-        
-        xValues.append(xData)
-        yValues.append(yData)
-        zValues.append(zData)
-        
         x.text = "\(xData)"
         y.text = "\(yData)"
         z.text = "\(zData)"
-        
-        //print(xValues)
-        
-        
         
     }
     

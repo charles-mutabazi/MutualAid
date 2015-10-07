@@ -8,6 +8,7 @@
 
 import UIKit
 import CoreLocation
+import CoreMotion
 
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate {
@@ -15,6 +16,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate
     var window: UIWindow?
 
     let locationManager = CLLocationManager()
+    var motionManager = CMMotionManager()
+    var xValues = [Double]()
+    var yValues = [Double]()
+    var zValues = [Double]()
+    var accData = [String:Array<Double>]()
     
     //define region for monitoring
     
@@ -26,6 +32,17 @@ class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate
     var exit_message:String!
 
     func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
+        
+        motionManager.accelerometerUpdateInterval = 1
+        motionManager.startAccelerometerUpdatesToQueue(NSOperationQueue.mainQueue()) { [weak self] (data: CMAccelerometerData?, error: NSError?) in
+            self!.outputAccelerationData(data!.acceleration)
+            if (error != nil){
+                print("\(error)")
+            }
+        }
+        
+        //To caputure acceleration Data
+        NSTimer.scheduledTimerWithTimeInterval(20, target: self, selector: Selector("motionDataCaptured"), userInfo: nil, repeats: true)
         
         // Override point for customization after application launch.
         locationManager.requestAlwaysAuthorization() //request permission for location updates
@@ -130,6 +147,34 @@ class AppDelegate: UIResponder, UIApplicationDelegate, CLLocationManagerDelegate
         exit_message = "Outside Region..."
         NSNotificationCenter.defaultCenter().postNotificationName("updateState", object: exit_message)
     }
+    
+    //Acceleration Data function
+    
+    func outputAccelerationData (acceleration:CMAcceleration){
+        
+        
+        let xData = Double(round(1000*acceleration.x)/1000)
+        let yData = Double(round(1000*acceleration.y)/1000)
+        let zData = Double(round(1000*acceleration.z)/1000)
+        
+        
+        xValues.append(xData)
+        yValues.append(yData)
+        zValues.append(zData)
+    }
+    
+    func motionDataCaptured() {
+    
+        accData = ["X":xValues, "Y":yValues, "Z":zValues]
+    
+        //print(accData)
+        NSNotificationCenter.defaultCenter().postNotificationName("accelerationData", object: accData)
+    
+        xValues = []
+        yValues = []
+        zValues = []
+    }
+    
     
 }
 

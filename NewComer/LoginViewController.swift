@@ -53,7 +53,7 @@ class LoginViewController: UIViewController, NSURLConnectionDelegate {
             do {
                 let parameters = ["UserName": username, "PassWord": password] as Dictionary<String, NSString>
                 
-                NSLog("PostData: %@",parameters);
+                //NSLog("PostData: %@",parameters);
                 
                 let url:NSURL = NSURL(string:"http://210.146.64.149:5003/login")!
                 
@@ -84,13 +84,13 @@ class LoginViewController: UIViewController, NSURLConnectionDelegate {
                 if ( urlData != nil ) {
                     let res = response as! NSHTTPURLResponse!;
                     
-                    NSLog("Response code: %ld", res.statusCode);
+                    //NSLog("Response code: %ld", res.statusCode);
                     
                     if (res.statusCode >= 200 && res.statusCode < 300){
                         
-                        let responseData:NSString  = NSString(data:urlData!, encoding:NSUTF8StringEncoding)!
-                        
-                        NSLog("Response ==> %@", responseData);
+//                        let responseData:NSString  = NSString(data:urlData!, encoding:NSUTF8StringEncoding)!
+//                        
+//                        NSLog("Response ==> %@", responseData);
                         
                         //var error: NSError?
                         
@@ -99,21 +99,21 @@ class LoginViewController: UIViewController, NSURLConnectionDelegate {
                         let success = jsonData.valueForKey("Success") as! String
                         
                         
-                        NSLog("Success: %@", success);
+                        //NSLog("Success: %@", success);
                         
                         if(success == "OK")
                         {
                             let userid = jsonData.valueForKey("UserID")
                             let email = jsonData.valueForKey("Email") as! String
                             
-                            NSLog("Login SUCCESS");
+                            //NSLog("Login SUCCESS");
                             
                             let date = NSDate()
                             let formatter = NSDateFormatter()
                             formatter.dateStyle = .ShortStyle
                             
                             
-                            print("Date is ===> \(formatter.stringFromDate(date))")
+                            //print("Date is ===> \(formatter.stringFromDate(date))")
                             
                             let prefs:NSUserDefaults = NSUserDefaults.standardUserDefaults()
                             prefs.setObject(userid, forKey: "userid")

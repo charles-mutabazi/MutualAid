@@ -79,7 +79,7 @@ class LocationService {
                 return
             }
             
-            print("Response: \(response)")
+            //print("Response: \(response)")
             let strData = NSString(data: data!, encoding: NSUTF8StringEncoding)
             print("Body: \(strData)")
             
